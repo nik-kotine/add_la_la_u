@@ -44,7 +44,7 @@ module ins_mem(ins, address);
   assign ins = IMEM[address[31:2]];
   
   initial begin
-    $readmemh("program.hex", IMEM);
+    $readmemh("/home/yaarii/Documentos/utec/arqui/add_la_la_u/program.txt", IMEM);
   end
 endmodule
 
