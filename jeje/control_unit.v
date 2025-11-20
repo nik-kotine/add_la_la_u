@@ -1,16 +1,17 @@
+// changed ALU_SRC_B to ALU_SRC_D
+// we are assumming ALU_SRC_A will not be used in the future
+// and will be ignored promptly
+
+// ===================
+// control_unit
+// ===================
 module control_unit(
-  // ahora la cosa esq aqui tenemos q tener
-  /*
-  regwrited, resultsrcd, memwrited, jumpd, branchd, alusrcd, aluctrold, immsrcd
-  o sea tengo q ver como es con jumpd y branchd
-  */
-  output reg [1:0] RES_SRC_D;
-  output reg MEM_WRITE_D, ALU_SRC_D, REG_WRITE_D, JUMP_D, BRANCH_D;
-  output reg [3:0] ALU_CONTROL_D;
-  output reg [2:0] IMM_SRC_D;
-  input [6:0] op, f7;
-  input [2:0] f3;
-  input ZERO;
+  output reg [1:0] RES_SRC_D,
+  output reg MEM_WRITE_D, ALU_SRC_D, REG_WRITE_D, JUMP_D, BRANCH_D,
+  output reg [3:0] ALU_CONTROL_D,
+  output reg [2:0] IMM_SRC_D,
+  input [6:0] op, f7,
+  input [2:0] f3
 );
   
   parameter I_TYPE_LOAD = 7'b0000011;
@@ -30,15 +31,19 @@ module control_unit(
           RES_SRC_D = 2'b01; // data memory
           MEM_WRITE_D = 1'b0; // read-only
           ALU_CONTROL_D = 4'b0000; // add
-          ALU_SRC_D = 1'b1; // immediate
+          ALU_SRC_D = 1'b1; // use immediate
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
           IMM_SRC_D = 3'b000; // I-type
           REG_WRITE_D = 1'b1; // write on rd
         end
       I_TYPE_OP:
         begin
-          RES_SRC_D   = 2'b00; // ALU result
+          RES_SRC_D = 2'b00; // ALU result
           MEM_WRITE_D = 1'b0; // read-only
-          ALU_SRC_D = 1'b1; // immediate
+          ALU_SRC_D = 1'b1; // use immediate
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
           IMM_SRC_D = 3'b000; // I-type
           REG_WRITE_D = 1'b1; // write on rd
           case (f3)
@@ -61,7 +66,10 @@ module control_unit(
           RES_SRC_D = 2'bXX; // unused
           MEM_WRITE_D = 1'b1; // write on memory
           ALU_CONTROL_D = 4'b0000; // add
-          ALU_SRC_D = 1'b1; // immediate
+          //ALU_SRC_A = 1'b0; // rd1
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
+          ALU_SRC_B_D = 1'b1; // immediate
           IMM_SRC_D = 3'b001; // S-type
           REG_WRITE_D = 1'b0; // read-only
         end
@@ -70,6 +78,9 @@ module control_unit(
           RES_SRC_D = 2'b11; // PCTarget
           MEM_WRITE_D = 1'b0; // read-only
           ALU_CONTROL_D = 4'bXXXX; // unused
+          //ALU_SRC_A = 1'bX; // unused
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
           ALU_SRC_D = 1'bX; // unused
           IMM_SRC_D = 3'b011; // U-type
           REG_WRITE_D = 1'b1; // write on rd
@@ -78,7 +89,10 @@ module control_unit(
         begin
           RES_SRC_D = 2'b00; // ALU result
           MEM_WRITE_D = 1'b0; // read-only
-          ALU_SRC_D = 1'b0; // rd1
+          //ALU_SRC_A = 1'b0; // rd1
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
+          ALU_SRC_D = 1'b0; // rd2
           IMM_SRC_D = 3'bXXX; // unused
           REG_WRITE_D = 1'b1; // write on rd
           case (f3)
@@ -105,7 +119,10 @@ module control_unit(
           RES_SRC_D = 2'b00; // ALU result
           MEM_WRITE_D = 1'b0; // read-only
           ALU_CONTROL_D = 4'b0000; // add
-          ALU_SRC_D = 1'b1; // zero
+          //ALU_SRC_A = 1'b1; // zero
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
+          ALU_SRC_D = 1'b1; // immediate
           IMM_SRC_D = 3'b011; // U-type
           REG_WRITE_D = 1'b1; // write on rd
         end
@@ -113,8 +130,10 @@ module control_unit(
         begin
           RES_SRC_D = 2'bXX; // unused
           MEM_WRITE_D = 1'b0; // read-only
-          ALU_SRC_D = 1'b0; // rd1
+          //ALU_SRC_A = 1'b0; // rd1
           ALU_SRC_D = 1'b0; // rd2
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b1; // branch usage
           IMM_SRC_D = 3'b010; // B-type
           REG_WRITE_D = 1'b0; // read-only
           case (f3)
@@ -143,8 +162,10 @@ module control_unit(
           RES_SRC_D = 2'b10; // data memory
           MEM_WRITE_D = 1'b0; // read-only
           ALU_CONTROL_D = 4'b0000; // add
-          ALU_SRC_D = 1'b0; // rs1
+          //ALU_SRC_A = 1'b0; // rs1
           ALU_SRC_D = 1'b1; // immediate
+          JUMP_D = 1'b0; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
           IMM_SRC_D = 3'b000; // I-type
           REG_WRITE_D = 1'b1; // write rd=PC+4
         end
@@ -153,20 +174,25 @@ module control_unit(
           RES_SRC_D = 2'b10; // PC+4
           MEM_WRITE_D = 1'b0; // read-only
           ALU_CONTROL_D = 4'bXXXX; // unused
+          //ALU_SRC_A = 1'bX; // unused
           ALU_SRC_D = 1'bX; // unused
+          JUMP_D = 1'b1; // no jump usage
+          BRANCH_D = 1'b0; // no branch usage
           IMM_SRC_D = 3'b100; // J-type
           REG_WRITE_D = 1'b1; // write rd=PC+4
         end
       default:
-        begin
+        begin-
           RES_SRC_D = 2'bXX;
           MEM_WRITE_D = 1'bX;
           ALU_CONTROL_D = 4'bXXXX;
+          //ALU_SRC_A = 1'bX;
           ALU_SRC_D = 1'bX;
+          JUMP_D = 1'bX; // no jump usage
+          BRANCH_D = 1'bX; // no branch usage
           IMM_SRC_D = 3'bXXX;
           REG_WRITE_D = 1'bX;
         end
     endcase
   
 endmodule
-
