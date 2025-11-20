@@ -1,7 +1,7 @@
 module data_mem(r_data, res_add, write_data, CLK, MEM_WRITE);
-  input CLK, MEM_WRITE;
-  input [31:0] res_add, write_data;
   output [31:0] r_data;
+  input [31:0] res_add, write_data;
+  input CLK, MEM_WRITE;
   
   reg [31:0] RAM [63:0];
   

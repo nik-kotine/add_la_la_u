@@ -4,24 +4,22 @@ module xd(
     input CLK, RESET,
 );
 
-// iniciamos con el fokin pc
-
-pc pc_inst(
+pc pc_inst( // TODO: AGREGAR stallF
     .PCF_curr(PCF),
     .PCF(PCF_next),
     .CLK(CLK),
     .RESET(RESET)
-)
+);
 
 // pasamos el pc al adder para sumarle 4
 
-adder pc_plus4_inst(
-    .Q(PCPlus4F), // mi nuevo pc
+adder pc_plus_4_inst(
+    .Q(PCPlus4F),
     .A(PCF),
     .B(32'd4)
 );
 
-// metemos el fokin pc al inst mem
+
 reg [31:0] instF;
 
 ins_mem IMEM(
@@ -29,11 +27,9 @@ ins_mem IMEM(
     .address(PCF)
 );
 
-// ahora hay q usar el IFID para guardas las mariconaditas
-
 reg [31:0] insD, PCD, PCPlus4D;
 
-IFID IFID_inst(
+IFID IFID_inst( // CORREGIR LOGICA STALLING y flushin walde matate:3
     .insD(insD),
     .PCD(PCD),
     .PCPlus4D(PCPlus4D),
@@ -45,9 +41,6 @@ IFID IFID_inst(
     .PCPlus4F(PCPlus4F),
     .PCF(PCF)
 );
-
-// ya tengo las mariconaditas en el IFID ahora a la siguiente etapa :333
-// el de fokin code
 
 reg [6:0] op;
 reg [2:0] f3;
@@ -66,8 +59,6 @@ decoder decoder_inst(
     .raw_imm(raw_imm), 
     .ins(insD)
 );
-
-// chucha medio q me olvide de hacer el register file
 
 wire [31:0] rd1, rd2, rdW;
 
@@ -90,9 +81,6 @@ always @ (*) begin
     rdD = add_3;
 end
 
-// como olvidarse del control unit el culpable de todas mis despgracias
-// encima tengo q declarar todas las salidas
-
 reg regWriteD, memWriteD, jumpD, branchD, ALUSrcD;
 reg [1:0] resultSrcD;
 reg [2:0] immSrcD;
@@ -105,13 +93,12 @@ control_unit control_unit_inst(
     .ALU_CONTROL_D(ALUControlD),
     .ALU_SRC_D(ALUSrcD),
     .IMM_SRC_D(immSrcD),
+    .JUMP_D(jumpD),
+    .BRANCH_D(branchD),
     .op(op),
     .f3(f3),
     .f7(f7)
 );
-// walde adapta tu control pls :'3
-// supongamos q soy tan pro q ya tengo las señales del control unit
-// aqui usamos raw_imm para sacar extImmD
 
 reg [31:0] extImmD;
 extender extender_inst(
@@ -174,7 +161,7 @@ mux1_alu m1(
     .forwardAE(forwardAE),
 );
 
-// aqui el otro p
+// aqui el otro 
 reg [31:0] mux2_out;
 
 mux2_alu m2(
@@ -202,13 +189,12 @@ alu alu_inst(
     .ALUControlE(ALUcontrolE)
 );
 
-// ahora si hago la magia del branch
-
 assign PCSrcE = jumpE || (zero && branchE);
 
 // el adder ese para el pc
 
 wire [31:0] PCTargetE;
+
 adder adder_branch(
     .Q(PCTargetE),
     .A(pcE),
@@ -241,8 +227,100 @@ EXMEM exmem_inst(
 
 // toca el data memory :3
 
+reg [31:0] readDataM;
+
 data_mem data_mem_inst(
- 
+    .r_data(readDataM),
+    .write_data(writeDataM),
+    .res_add(aluResultM),
+    .MEM_WRITE(memWriteM),
+    .CLK(CLK)
 );
 
+// ahora el MEMWB osea memory y write back
+
+reg [31:0] readDataW, aluResultW, rdW, PCPlus4W;
+reg regWriteW;
+reg [1:0] ResultSrcW;
+
+MEMWB MEMWB_inst(
+    .readDataW(readDataW),
+    .aluResultW(aluResultW),
+    .rdW(rdW),
+    .PC_plus_4W(PCPlus4W),
+    .regWriteW(regWriteW),
+    .ResultSrcW(ResultSrcW),
+    .readDataM(readDataM),
+    .aluResultM(aluResultM),
+    .rdM(rdM),
+    .PC_plus_4M(PCPlus4M),
+    .regWriteM(regWriteM),
+    .CLK(CLK),
+    .ResultSrcM(ResultSrcM)
+);
+
+// finalmente el mux del write back
+
+result_mux result_mux_inst(
+    .resultW(resultW),
+    .ALUResultM(aluResultW),
+    .readDataW(readDataW),
+    .PCPlus4W(PCPlus4W),
+    .RES_SRC_W(ResultSrcW)
+);
+
+// el pc mux :3
+
+pc_mux pc_mux_inst(
+    .PC_next(PCF_next),
+    .PCPlus4F(PCPlus4F),
+    .PCTargetE(PCTargetE),
+    .PCSrcE(PCSrcE)
+);
+
+// hazard unit :V
+
+// :3333
+
+// para forwardAE 
+forwarding forwarding_inst(
+    .forwardNE(forwardAE),
+    .rsXE(rs1E),
+    .rdM(rdM),
+    .rdW(rdW),
+    .regWriteM(regWriteM),
+    .regWriteW(regWriteW)
+);
+
+// para forwardBE
+
+forwarding forwarding_inst(
+    .forwarNE(forwardAE),
+    .rsXE(rs2E),
+    .rdM(rdM),
+    .rdW(rdW),
+    .regWriteM(regWriteM),
+    .regWriteW(regWriteW)
+);
+
+// stalling unit 7w7
+
+wire lwStall, stallF, stallD, flushE;
+
+stalling stalling_inst(
+    .lwStall(lwStall),
+    .stallF(stallF),
+    .stallD(stallD),
+    .flushE(flushE),
+    .rs1D(rs1D),
+    .rs2D(rs2D),
+    .rdE(rdE),
+);
+
+flushing flushing_inst(
+    .flushD(flushD),
+    .flushE(flushE),
+    .lwStall(lwStall),
+    .PCSrcE(PCSrcE),
+);
 endmodule

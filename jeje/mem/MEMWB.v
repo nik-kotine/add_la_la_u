@@ -1,4 +1,4 @@
-module reg4(
+module MEMWB(
     output reg [31:0] readDataW, aluResultW, rdW, PC_plus_4W,
     output reg regWriteW,
     output reg [1:0] ResultSrcW,

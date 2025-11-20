@@ -1,16 +1,17 @@
-module result_mux(add_3, ALU_result, r_data, PC_plus_4, PC_target, RES_SRC);
-  output reg [31:0] add_3;
-  input [31:0] ALU_result, r_data, PC_plus_4, PC_target;
-  input [1:0] RES_SRC;
+module result_mux(resultW, ALUResultM, readDataW, PCPlus4W, RES_SRC);
+  output reg [31:0] resultW;
+  input [31:0] ALUResultM, readDataW, PCPlus4W;
+  // input [31:0] PC_target;
+  input [1:0] RES_SRC_W;
   
   always @ (*)
     begin
-      case (RES_SRC)
-        2'b00: add_3 = ALU_result;
-        2'b01: add_3 = r_data;
-        2'b10: add_3 = PC_plus_4;
-        2'b11: add_3 = PC_target;
-        default: add_3 = ALU_result;
+      case (RES_SRC_W)
+        2'b00: resultW = ALUResultM;
+        2'b01: resultW = readDataW;
+        2'b10: resultW = PCPlus4W;
+        //2'b11: resultW = PC_target;
+        default: resultW = ALUResultM;
       endcase
     end
 endmodule
