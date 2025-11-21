@@ -1,4 +1,4 @@
-module reg3 (
+module EXMEM (
     output reg [31:0] rdM, aluResultM, writeDataM, PCPlus4M,
     output reg regWriteM, memWriteM,
     output reg [1:0] ResultSrcM,

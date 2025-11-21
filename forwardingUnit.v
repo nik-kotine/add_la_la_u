@@ -11,8 +11,7 @@ module forwarding(
     else if (((rsXE == rdW) & regWriteW) & (rsXE != 0)) begin
       forwardNE <= 2'b01;
     end
-    else begin 
-    	forwardNE <= 2'b00;
-    end
+    else forwardNE <= 2'b00;
+    
   end
 endmodule

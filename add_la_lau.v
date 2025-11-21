@@ -17,6 +17,22 @@ module pc_mux(PC_next, PC_plus_4, PC_target, ALU_result, PC_SRC);
     endcase
 endmodule
 
+
+module pc_reg (
+    output reg [31:0] PCF,
+    input [31:0] PCFx,
+    input CLK, reset, stallF
+);
+    always @ (posedge CLK) begin
+        if (reset) begin
+            PCF <= 32'b0;
+        end
+        else if (!stallF) begin
+            PCF <= PCFx;
+        end
+    end
+endmodule
+
 // ===================
 // pc
 // ===================
@@ -28,7 +44,9 @@ module pc(PC_curr, PC_next, CLK, RESET);
   always @ (posedge CLK)
     begin
       if (RESET) PC_curr <= 32'b0;
-      else PC_curr <= PC_next;
+      else if (!stallF) begin
+            PC_curr <= PC_next;
+        end
     end
 endmodule
 
@@ -536,7 +554,7 @@ module top(CLK, RESET);
   always @ (posedge CLK) begin
     $display("PC=%h | s0(x8)=%h  s1(x9)=%h  a0(x10)=%h  s2(x18)=%h  t0(x5)=%h  t1(x6)=%h  t2(x7)=%h",
              PC_curr,
-             RF.rf[8],   // s0
+             REF.rf[8],   // s0
              RF.rf[9],   // s1
              RF.rf[10],  // a0
              RF.rf[18],  // s2

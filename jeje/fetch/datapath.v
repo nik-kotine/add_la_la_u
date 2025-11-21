@@ -1,14 +1,47 @@
+`timescale 1ns/1ns
+
 module xd(
     output [31:0] PCF,
     input [31:0] PCF_next,
-    input CLK, RESET,
+    input CLK, RESET
 );
+
+wire lwStall, stallF, stallD, flushE;
+reg [31:0] insD, PCD, PCPlus4D, writeDataE, PCPlus4F;
+reg [31:0] instF;
+reg [6:0] op, f7;
+reg [2:0] f3;
+reg [4:0] add_1, add_2, add_3, rs1D, rs2D, rdD;
+reg [24:0] raw_imm;
+wire [31:0] rd1, rd2, rdW;
+reg [1:0] resultSrcD;
+reg [2:0] immSrcD;
+reg [3:0] ALUControlD;
+reg [31:0] rd1E, rd2E, pcE, rs1E, rs2E, rdE, extImmE, PCPlus4E;
+reg regWriteE, memWriteE, jumpE, branchE, ALUsrcE, regWriteD, memWriteD, jumpD, branchD, ALUSrcD;
+reg [3:0] ALUcontrolE;
+reg [1:0] ResultSrcE;
+reg [31:0] extImmD;
+reg [31:0] mux2_out;
+reg [31:0] srcAE;
+wire zero;
+wire [31:0] srcBE;
+reg [31:0] rdM, aluResultM, writeDataM, PCPlus4M;
+reg regWriteM, memWriteM;
+reg [1:0] ResultSrcM;
+wire [31:0] PCTargetE;
+reg [31:0] readDataW, aluResultW, rdW, PCPlus4W;
+reg regWriteW;
+reg [1:0] ResultSrcW;
+reg [31:0] readDataM;
+
 
 pc pc_inst( // TODO: AGREGAR stallF
     .PCF_curr(PCF),
     .PCF(PCF_next),
     .CLK(CLK),
-    .RESET(RESET)
+    .RESET(RESET),
+    .stallF(stallF)
 );
 
 // pasamos el pc al adder para sumarle 4
@@ -20,14 +53,11 @@ adder pc_plus_4_inst(
 );
 
 
-reg [31:0] instF;
-
 ins_mem IMEM(
     .ins(instF),
     .address(PCF)
 );
 
-reg [31:0] insD, PCD, PCPlus4D;
 
 IFID IFID_inst( // CORREGIR LOGICA STALLING y flushin walde matate:3
     .insD(insD),
@@ -42,12 +72,7 @@ IFID IFID_inst( // CORREGIR LOGICA STALLING y flushin walde matate:3
     .PCF(PCF)
 );
 
-reg [6:0] op;
-reg [2:0] f3;
-reg [6:0] f7;
-reg [4:0] add_1, add_2, add_3;
-reg [4:0] rs1D, rs2D, rdD;
-reg [24:0] raw_imm;
+
 
 decoder decoder_inst(
     .op(op),
@@ -60,7 +85,6 @@ decoder decoder_inst(
     .ins(insD)
 );
 
-wire [31:0] rd1, rd2, rdW;
 
 reg_file reg_file_inst(
     .r_data_1(rd1),
@@ -81,10 +105,6 @@ always @ (*) begin
     rdD = add_3;
 end
 
-reg regWriteD, memWriteD, jumpD, branchD, ALUSrcD;
-reg [1:0] resultSrcD;
-reg [2:0] immSrcD;
-reg [3:0] ALUControlD;
 
 control_unit control_unit_inst(
     .RES_SRC_D(resultSrcD),
@@ -100,7 +120,6 @@ control_unit control_unit_inst(
     .f7(f7)
 );
 
-reg [31:0] extImmD;
 extender extender_inst(
     .imm(extImmD),
     .raw_imm(raw_imm),
@@ -109,10 +128,7 @@ extender extender_inst(
 
 // bueno ya extendimos ahora toca pasarle las cosas al IDEX osea que ya fue ya
 
-reg [31:0] rd1E, rd2E, pcE, rs1E, rs2E, rdE, extImmE, PCPlus4E;
-reg regWriteE, memWriteE, jumpE, branchE, ALUsrcE;
-reg [3:0] ALUcontrolE;
-reg [1:0] ResultSrcE;
+
 
 IDEX IDEX_inst(
     .rd1E(rd1E), 
@@ -122,7 +138,7 @@ IDEX IDEX_inst(
     .rs2E(rs2E), 
     .rdE(rdE), 
     .extImmE(extImmE), 
-    .PCPlus4E(PC_plus_4E),
+    .PCPlus4E(PCPlus4E),
     .regWriteE(regWriteE),
     .memWriteE(memWriteE),
     .jumpE(jumpE),
@@ -151,35 +167,31 @@ IDEX IDEX_inst(
 );
 
 // aqui vamos preparando el primer valor para el mux
-reg [31:0] srcAE;
 
 mux1_alu m1(
     .srcAE(srcAE),
     .rd1E(rd1E),
     .resultW(resultW),
     .aluResultM(aluResultM),
-    .forwardAE(forwardAE),
+    .forwardAE(forwardAE)
 );
 
 // aqui el otro 
-reg [31:0] mux2_out;
 
 mux2_alu m2(
     .mux2_out(mux2_out),
     .rd2E(rd2E),
     .resultW(resultW),
     .aluResultM(aluResultM),
-    .forwardBE(forwardBE),
+    .forwardBE(forwardBE)
 );
 
 // mux final para srcBE
 
-wire [31:0] srcBE;
 assign srcBE = ALUsrcE ? extImmE : mux2_out;
 
 // add la, la, u time
 
-wire zero;
 
 alu alu_inst(
     .ALUResultE(aluResultE),
@@ -193,7 +205,6 @@ assign PCSrcE = jumpE || (zero && branchE);
 
 // el adder ese para el pc
 
-wire [31:0] PCTargetE;
 
 adder adder_branch(
     .Q(PCTargetE),
@@ -203,9 +214,7 @@ adder adder_branch(
 
 // ahora el EXMEM osea execute y memory
 
-reg [31:0] rdM, aluResultM, writeDataM, PCPlus4M;
-reg regWriteM, memWriteM;
-reg [1:0] ResultSrcM;
+
 
 EXMEM exmem_inst(
     .rdM(rdM),
@@ -227,7 +236,6 @@ EXMEM exmem_inst(
 
 // toca el data memory :3
 
-reg [31:0] readDataM;
 
 data_mem data_mem_inst(
     .r_data(readDataM),
@@ -239,9 +247,7 @@ data_mem data_mem_inst(
 
 // ahora el MEMWB osea memory y write back
 
-reg [31:0] readDataW, aluResultW, rdW, PCPlus4W;
-reg regWriteW;
-reg [1:0] ResultSrcW;
+
 
 MEMWB MEMWB_inst(
     .readDataW(readDataW),
@@ -283,7 +289,7 @@ pc_mux pc_mux_inst(
 // :3333
 
 // para forwardAE 
-forwarding forwarding_inst(
+forwarding forwarding_instA(
     .forwardNE(forwardAE),
     .rsXE(rs1E),
     .rdM(rdM),
@@ -294,8 +300,8 @@ forwarding forwarding_inst(
 
 // para forwardBE
 
-forwarding forwarding_inst(
-    .forwarNE(forwardAE),
+forwarding forwarding_instB(
+    .forwardNE(forwardBE),
     .rsXE(rs2E),
     .rdM(rdM),
     .rdW(rdW),
@@ -305,22 +311,20 @@ forwarding forwarding_inst(
 
 // stalling unit 7w7
 
-wire lwStall, stallF, stallD, flushE;
 
 stalling stalling_inst(
     .lwStall(lwStall),
     .stallF(stallF),
     .stallD(stallD),
-    .flushE(flushE),
     .rs1D(rs1D),
     .rs2D(rs2D),
-    .rdE(rdE),
+    .rdE(rdE)
 );
 
 flushing flushing_inst(
     .flushD(flushD),
     .flushE(flushE),
     .lwStall(lwStall),
-    .PCSrcE(PCSrcE),
+    .PCSrcE(PCSrcE)
 );
 endmodule
