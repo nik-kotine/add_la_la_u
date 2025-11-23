@@ -1,0 +1,20 @@
+00a00293
+01400313
+03200393
+00530333
+00000293
+0080006f
+00100293
+----- MONITOR DEL PIPELINE  1 -----
+PC   INS       | x5(t0)  x6(t1)  x7(t2) | rdW resultW regWriteW | ALU_E
+-----------------------------------------------------------------------
+PC=00000010 ins=00000293 | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=0000000a regWriteW=1 | ALU=00000032
+PC=00000014 ins=0080006f | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=00000014 regWriteW=1 | ALU=xxxxxxxx
+PC=00000018 ins=00100293 | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=00000032 regWriteW=1 | ALU=00000000
+PC=0000001c ins=00228293 | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=xxxxxxxx regWriteW=1 | ALU=00000000
+PC=0000001c ins=00228293 | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=00000000 regWriteW=1 | ALU=00000000
+PC=00000020 ins=xxxxxxxx | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=00000018 regWriteW=1 | ALU=00000000
+PC=0000002c ins=xxxxxxxx | t0=xxxxxxxx t1=xxxxxxxx t2=xxxxxxxx | rdW=x resultW=xxxxxxxx regWriteW=1 | ALU=xxxxxxxx
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'tb_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 1000ns
+00228293

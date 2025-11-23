@@ -1,0 +1,14 @@
+.global _start
+_start:
+	
+	li t0, 10
+	li t1, 20
+	li t2, 50
+	add t1, t1, t02	
+	li t0, 0
+	j done
+	li t0, 1
+	done:
+	addi t0, t0, 2
+	
+	
